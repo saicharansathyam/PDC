@@ -5,5 +5,9 @@
         <file>asset/green.svg</file>
         <file>asset/yellow.svg</file>
         <file>asset/red.svg</file>
+        <file>asset/pdc_back.png</file>
+        <file>asset/alter_green.png</file>
+        <file>asset/alter_yellow.png</file>
+        <file>asset/alter_red.png</file>
     </qresource>
 </RCC>

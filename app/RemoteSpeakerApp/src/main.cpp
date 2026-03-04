@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <QDebug>
+#include <QFileInfo>
 #include "VehicleControlClient.h"
 #include "BeepController.h"
 
@@ -13,11 +14,15 @@ int main(int argc, char *argv[])
     }
 
     if (qgetenv("VSOMEIP_CONFIGURATION").isEmpty()) {
-        qputenv("VSOMEIP_CONFIGURATION", "/home/seame/PDC/headunit/DES_Head-Unit/app/RemoteSpeakerApp/config/vsomeip_speaker.json");
+        QString appDir = QFileInfo("/proc/self/exe").absolutePath();
+        qputenv("VSOMEIP_CONFIGURATION",
+                (appDir + "/../../app/RemoteSpeakerApp/config/vsomeip_speaker.json").toLocal8Bit());
     }
 
     if (qgetenv("COMMONAPI_CONFIG").isEmpty()) {
-        qputenv("COMMONAPI_CONFIG", "/home/seame/PDC/headunit/DES_Head-Unit/commonapi/commonapi.ini");
+        QString appDir = QFileInfo("/proc/self/exe").absolutePath();
+        qputenv("COMMONAPI_CONFIG",
+                (appDir + "/../../app/RemoteSpeakerApp/config/commonapi_speaker.ini").toLocal8Bit());
     }
 
     QCoreApplication app(argc, argv);

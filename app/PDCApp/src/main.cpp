@@ -2,7 +2,9 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QDebug>
+#include <QFileInfo>
 #include "VehicleControlClient.h"
+#include "GstVideoReceiver.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,12 +18,16 @@ int main(int argc, char *argv[])
 
     // vsomeip config - check if already set by environment, otherwise use default
     if (qgetenv("VSOMEIP_CONFIGURATION").isEmpty()) {
-        qputenv("VSOMEIP_CONFIGURATION", "/home/seame/PDC/headunit/DES_Head-Unit/app/PDCApp/config/vsomeip_pdc.json");
+        QString appDir = QFileInfo("/proc/self/exe").absolutePath();
+        qputenv("VSOMEIP_CONFIGURATION",
+                (appDir + "/../../app/PDCApp/config/vsomeip_pdc.json").toLocal8Bit());
     }
 
     // commonapi config - check if already set by environment, otherwise use default
     if (qgetenv("COMMONAPI_CONFIG").isEmpty()) {
-        qputenv("COMMONAPI_CONFIG", "/home/seame/PDC/headunit/DES_Head-Unit/commonapi/commonapi.ini");
+        QString appDir = QFileInfo("/proc/self/exe").absolutePath();
+        qputenv("COMMONAPI_CONFIG",
+                (appDir + "/../../app/PDCApp/config/commonapi_pdc.ini").toLocal8Bit());
     }
 
     // Wayland settings - only set if not already configured
@@ -68,12 +74,40 @@ int main(int argc, char *argv[])
     qDebug() << "";
 
     // ═══════════════════════════════════════════════════════════
+    // GstVideoReceiver (camera stream) initialization
+    // ═══════════════════════════════════════════════════════════
+    GstVideoReceiver videoReceiver;
+    if (videoReceiver.initialize(5000)) {
+        qDebug() << "GstVideoReceiver initialized (listening on UDP port 5000)";
+    } else {
+        qWarning() << "Failed to initialize GstVideoReceiver";
+    }
+
+    // Connect gear changes to video receiver start/stop
+    QObject::connect(&vehicleControlClient, &VehicleControlClient::currentGearChanged,
+                     [&videoReceiver](const QString &gear) {
+        if (gear == "R") {
+            qDebug() << "Gear is R - starting video receiver";
+            videoReceiver.start();
+        } else {
+            qDebug() << "Gear is not R - stopping video receiver";
+            videoReceiver.stop();
+        }
+    });
+
+    qDebug() << "";
+
+    // ═══════════════════════════════════════════════════════════
     // QML GUI Load
     // ═══════════════════════════════════════════════════════════
     QQmlApplicationEngine engine;
 
+    // Register camera image provider
+    engine.addImageProvider("camera", new CameraImageProvider(&videoReceiver));
+
     // Expose C++ objects to QML
     engine.rootContext()->setContextProperty("vehicleControlClient", &vehicleControlClient);
+    engine.rootContext()->setContextProperty("videoReceiver", &videoReceiver);
 
     // Load QML file
     const QUrl url(QStringLiteral("qrc:/qml/PDCDisplay.qml"));

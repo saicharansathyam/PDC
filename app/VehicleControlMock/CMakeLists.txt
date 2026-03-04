@@ -30,6 +30,10 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
 # Qt packages (Core only - no GUI needed)
 find_package(Qt5 REQUIRED COMPONENTS Core)
 
+# GStreamer for camera streaming
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GST REQUIRED gstreamer-1.0)
+
 # CommonAPI & vsomeip
 find_package(CommonAPI 3.2 REQUIRED)
 find_package(CommonAPI-SomeIP 3.2 REQUIRED)
@@ -50,6 +54,7 @@ message(STATUS "CommonAPI generated code directory: ${COMMONAPI_GEN_DIR}")
 include_directories(
     ${COMMONAPI_GEN_DIR}/core
     ${COMMONAPI_GEN_DIR}/someip
+    ${GST_INCLUDE_DIRS}
 )
 
 set(CMAKE_AUTOMOC ON)
@@ -58,10 +63,12 @@ set(CMAKE_AUTOMOC ON)
 set(SOURCES
     src/main.cpp
     src/MockStubImpl.cpp
+    src/CameraStreamer.cpp
 )
 
 set(HEADERS
     src/MockStubImpl.h
+    src/CameraStreamer.h
 )
 
 # CommonAPI generated sources (SomeIP binding - Stub for service provider)
@@ -82,6 +89,7 @@ target_link_libraries(VehicleControlMock
     CommonAPI
     CommonAPI-SomeIP
     vsomeip3
+    ${GST_LIBRARIES}
 )
 
 # Install

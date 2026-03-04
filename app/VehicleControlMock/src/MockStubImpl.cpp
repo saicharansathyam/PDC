@@ -5,12 +5,21 @@
 MockStubImpl::MockStubImpl(QObject *parent)
     : QObject(parent)
     , m_updateTimer(new QTimer(this))
+    , m_cameraStreamer(new CameraStreamer(this))
     , m_currentGear("P")
     , m_currentDistance(START_DISTANCE)
     , m_targetDistance(END_DISTANCE)
     , m_distanceStep(DISTANCE_STEP)
 {
     connect(m_updateTimer, &QTimer::timeout, this, &MockStubImpl::updateDistance);
+
+    // Initialize camera streamer (use test source for desktop, target localhost)
+    if (m_cameraStreamer->initialize("127.0.0.1", 5000, true)) {
+        qDebug() << "[Mock] CameraStreamer initialized (test source -> 127.0.0.1:5000)";
+    } else {
+        qWarning() << "[Mock] Failed to initialize CameraStreamer";
+    }
+
     qDebug() << "[Mock] MockStubImpl created";
 }
 
@@ -49,7 +58,7 @@ void MockStubImpl::setGearPosition(const std::shared_ptr<CommonAPI::ClientId> _c
     qDebug() << "[Mock] Gear changed:" << oldGear << "->" << m_currentGear;
     qDebug() << "[Mock] Timer active:" << m_updateTimer->isActive() << "Current distance:" << m_currentDistance;
 
-    // Start/stop PDC simulation based on gear
+    // Start/stop PDC simulation and camera based on gear
     // Use QMetaObject::invokeMethod to ensure timer operations happen in the correct thread
     if (gear == "R") {
         if (!m_updateTimer->isActive()) {
@@ -57,17 +66,22 @@ void MockStubImpl::setGearPosition(const std::shared_ptr<CommonAPI::ClientId> _c
             qDebug() << "═══════════════════════════════════════════════════════";
             qDebug() << "[Mock] Reverse gear engaged - starting PDC distance simulation";
             qDebug() << "[Mock] Distance will decrease from" << START_DISTANCE << "cm to" << END_DISTANCE << "cm";
+            qDebug() << "[Mock] Starting camera stream...";
             qDebug() << "═══════════════════════════════════════════════════════";
             qDebug() << "";
             m_currentDistance = START_DISTANCE;
             // Start timer in the main thread (Qt event loop thread)
             QMetaObject::invokeMethod(m_updateTimer, "start", Qt::QueuedConnection,
                                       Q_ARG(int, 500));  // UPDATE_INTERVAL = 500ms
+            // Start camera streaming
+            m_cameraStreamer->start();
         }
     } else if (oldGear == "R") {
-        qDebug() << "[Mock] Reverse gear disengaged - stopping PDC simulation";
+        qDebug() << "[Mock] Reverse gear disengaged - stopping PDC simulation and camera";
         QMetaObject::invokeMethod(m_updateTimer, "stop", Qt::QueuedConnection);
         m_currentDistance = START_DISTANCE;
+        // Stop camera streaming
+        m_cameraStreamer->stop();
     }
 
     _reply(true);
@@ -109,11 +123,16 @@ void MockStubImpl::startSimulation()
 
     // Start timer
     m_updateTimer->start(UPDATE_INTERVAL);
+
+    // Start camera streaming
+    qDebug() << "[Mock] Starting camera stream...";
+    m_cameraStreamer->start();
 }
 
 void MockStubImpl::stopSimulation()
 {
     m_updateTimer->stop();
+    m_cameraStreamer->stop();
     qDebug() << "[Mock] Simulation stopped";
 }
 

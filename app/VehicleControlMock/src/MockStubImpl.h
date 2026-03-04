@@ -5,6 +5,7 @@
 #include <v1/vehiclecontrol/VehicleControlStubDefault.hpp>
 #include <QObject>
 #include <QTimer>
+#include "CameraStreamer.h"
 
 using namespace v1::vehiclecontrol;
 
@@ -38,6 +39,7 @@ private slots:
 
 private:
     QTimer* m_updateTimer;
+    CameraStreamer* m_cameraStreamer;
 
     // Current mock state
     QString m_currentGear;

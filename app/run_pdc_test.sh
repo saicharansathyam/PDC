@@ -137,10 +137,10 @@ run_apps() {
     # Terminal 1: VehicleControlMock
     echo "Starting VehicleControlMock..."
     gnome-terminal --title="VehicleControlMock" -- bash -c "
-cd $BUILD_DIR/VehicleControlMock
+cd '$BUILD_DIR/VehicleControlMock'
 export VSOMEIP_APPLICATION_NAME=VehicleControlMock
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/VehicleControlMock/config/vsomeip_mock.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/VehicleControlMock/config/vsomeip_mock.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./VehicleControlMock
 exec bash" &
 
@@ -149,7 +149,7 @@ exec bash" &
     # Terminal 2: HU_MainApp Compositor (runs on X11/xcb for local testing)
     echo "Starting HU_MainApp Compositor..."
     gnome-terminal --title="HU_MainApp Compositor" -- bash -c "
-cd $BUILD_DIR/HU_MainApp
+cd '$BUILD_DIR/HU_MainApp'
 export QT_QPA_PLATFORM=xcb
 export QML2_IMPORT_PATH=/usr/lib/x86_64-linux-gnu/qt5/qml
 export XDG_RUNTIME_DIR=/run/user/\$(id -u)
@@ -178,14 +178,14 @@ exec bash" &
     # Terminal 3: GearApp (connects to HU_MainApp compositor via wayland-1)
     echo "Starting GearApp..."
     gnome-terminal --title="GearApp" -- bash -c "
-cd $BUILD_DIR/GearApp
+cd '$BUILD_DIR/GearApp'
 export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export XDG_RUNTIME_DIR=/run/user/\$(id -u)
 export WAYLAND_DISPLAY=wayland-1
 export VSOMEIP_APPLICATION_NAME=GearApp
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./GearApp
 exec bash" &
 
@@ -194,14 +194,14 @@ exec bash" &
     # Terminal 4: PDCApp (connects to HU_MainApp compositor via wayland-1)
     echo "Starting PDCApp..."
     gnome-terminal --title="PDCApp" -- bash -c "
-cd $BUILD_DIR/PDCApp
+cd '$BUILD_DIR/PDCApp'
 export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export XDG_RUNTIME_DIR=/run/user/\$(id -u)
 export WAYLAND_DISPLAY=wayland-1
 export VSOMEIP_APPLICATION_NAME=PDCApp
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/PDCApp/config/vsomeip_pdc.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/PDCApp/config/vsomeip_pdc.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./PDCApp
 exec bash" &
 
@@ -210,10 +210,10 @@ exec bash" &
     # Terminal 5: RemoteSpeakerApp (optional - for beep sounds)
     echo "Starting RemoteSpeakerApp..."
     gnome-terminal --title="RemoteSpeakerApp" -- bash -c "
-cd $BUILD_DIR/RemoteSpeakerApp
+cd '$BUILD_DIR/RemoteSpeakerApp'
 export VSOMEIP_APPLICATION_NAME=RemoteSpeakerApp
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/RemoteSpeakerApp/config/vsomeip_speaker.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/RemoteSpeakerApp/config/vsomeip_speaker.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./RemoteSpeakerApp
 exec bash" &
 
@@ -222,14 +222,14 @@ exec bash" &
     # Terminal 6: HomeScreenApp (dashboard - connects to compositor via wayland-1)
     echo "Starting HomeScreenApp..."
     gnome-terminal --title="HomeScreenApp" -- bash -c "
-cd $BUILD_DIR/HomeScreenApp
+cd '$BUILD_DIR/HomeScreenApp'
 export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export XDG_RUNTIME_DIR=/run/user/\$(id -u)
 export WAYLAND_DISPLAY=wayland-1
 export VSOMEIP_APPLICATION_NAME=HomeScreenApp
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./HomeScreenApp
 exec bash" &
 
@@ -238,14 +238,14 @@ exec bash" &
     # Terminal 7: MediaApp (media player - connects to compositor via wayland-1)
     echo "Starting MediaApp..."
     gnome-terminal --title="MediaApp" -- bash -c "
-cd $BUILD_DIR/MediaApp
+cd '$BUILD_DIR/MediaApp'
 export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export XDG_RUNTIME_DIR=/run/user/\$(id -u)
 export WAYLAND_DISPLAY=wayland-1
 export VSOMEIP_APPLICATION_NAME=MediaApp
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./MediaApp
 exec bash" &
 
@@ -254,14 +254,14 @@ exec bash" &
     # Terminal 8: AmbientApp (ambient lighting - connects to compositor via wayland-1)
     echo "Starting AmbientApp..."
     gnome-terminal --title="AmbientApp" -- bash -c "
-cd $BUILD_DIR/AmbientApp
+cd '$BUILD_DIR/AmbientApp'
 export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export XDG_RUNTIME_DIR=/run/user/\$(id -u)
 export WAYLAND_DISPLAY=wayland-1
 export VSOMEIP_APPLICATION_NAME=AmbientApp
-export VSOMEIP_CONFIGURATION=$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json
-export COMMONAPI_CONFIG=$BASE_DIR/commonapi/commonapi.ini
+export VSOMEIP_CONFIGURATION='$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json'
+export COMMONAPI_CONFIG='$BASE_DIR/commonapi/commonapi.ini'
 ./AmbientApp
 exec bash" &
 
