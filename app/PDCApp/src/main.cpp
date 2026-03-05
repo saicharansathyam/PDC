@@ -79,21 +79,12 @@ int main(int argc, char *argv[])
     GstVideoReceiver videoReceiver;
     if (videoReceiver.initialize(5000)) {
         qDebug() << "GstVideoReceiver initialized (listening on UDP port 5000)";
+        // Start receiving immediately — HU_MainApp compositor shows PDCApp only when gear=R
+        videoReceiver.start();
+        qDebug() << "GstVideoReceiver started (awaiting stream on UDP port 5000)";
     } else {
         qWarning() << "Failed to initialize GstVideoReceiver";
     }
-
-    // Connect gear changes to video receiver start/stop
-    QObject::connect(&vehicleControlClient, &VehicleControlClient::currentGearChanged,
-                     [&videoReceiver](const QString &gear) {
-        if (gear == "R") {
-            qDebug() << "Gear is R - starting video receiver";
-            videoReceiver.start();
-        } else {
-            qDebug() << "Gear is not R - stopping video receiver";
-            videoReceiver.stop();
-        }
-    });
 
     qDebug() << "";
 

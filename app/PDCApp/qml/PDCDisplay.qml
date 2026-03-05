@@ -46,14 +46,15 @@ Window {
         color: "#000000"
 
         // ═══════════════════════════════════════════════════════════
-        // Split-Screen View (shown when gear is "R")
+        // Split-Screen View (always shown — HU_MainApp compositor
+        // controls PDCApp visibility based on gear)
         // Left: Top-down car view with distance arcs
         // Right: Live rear camera feed with guide overlay
         // ═══════════════════════════════════════════════════════════
         Item {
             id: cameraView
             anchors.fill: parent
-            visible: currentGear === "R"
+            visible: true
 
             Row {
                 anchors.fill: parent
@@ -405,12 +406,12 @@ Window {
         }
 
         // ═══════════════════════════════════════════════════════════
-        // Distance Display (shown when gear is NOT "R")
+        // Distance Display (hidden — compositor handles visibility)
         // ═══════════════════════════════════════════════════════════
         Item {
             id: distanceView
             anchors.fill: parent
-            visible: currentGear !== "R"
+            visible: false
 
         // Distance display - on the left side of the car
         Text {
