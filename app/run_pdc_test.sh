@@ -142,7 +142,10 @@ run_apps() {
         QML_IMPORT="/usr/lib/x86_64-linux-gnu/qt5/qml"
     fi
 
-    COMMONAPI_CFG="$BASE_DIR/commonapi/commonapi.ini"
+    # Per-app CommonAPI configs — each specifies binding=someip for VehicleControl
+    VCMOCK_CAPI="$SCRIPT_DIR/VehicleControlMock/config/commonapi_mock.ini"
+    PDC_CAPI="$SCRIPT_DIR/PDCApp/config/commonapi_pdc.ini"
+    ECU2_CAPI="$SCRIPT_DIR/GearApp/config/commonapi_ecu2.ini"
     XDG_RT="/run/user/$(id -u)"
 
     # Kill stale processes and lock files
@@ -161,7 +164,7 @@ run_apps() {
     echo "Starting VehicleControlMock..."
     VSOMEIP_APPLICATION_NAME=VehicleControlMock \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/VehicleControlMock/config/vsomeip_mock.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$VCMOCK_CAPI" \
     "$BUILD_DIR/VehicleControlMock/VehicleControlMock" > /tmp/vcmock.log 2>&1 &
     sleep 2
 
@@ -209,7 +212,7 @@ run_apps() {
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=GearApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$ECU2_CAPI" \
     "$BUILD_DIR/GearApp/GearApp" > /tmp/gearapp.log 2>&1 &
     sleep 1
 
@@ -223,7 +226,7 @@ run_apps() {
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=PDCApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/PDCApp/config/vsomeip_pdc.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$PDC_CAPI" \
     "$BUILD_DIR/PDCApp/PDCApp" > /tmp/pdcapp.log 2>&1 &
     sleep 1
 
@@ -236,7 +239,7 @@ run_apps() {
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=HomeScreenApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$ECU2_CAPI" \
     "$BUILD_DIR/HomeScreenApp/HomeScreenApp" > /tmp/homescreen.log 2>&1 &
     sleep 1
 
@@ -249,7 +252,7 @@ run_apps() {
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=MediaApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$ECU2_CAPI" \
     "$BUILD_DIR/MediaApp/MediaApp" > /tmp/mediaapp.log 2>&1 &
     sleep 1
 
@@ -262,7 +265,7 @@ run_apps() {
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=AmbientApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$ECU2_CAPI" \
     "$BUILD_DIR/AmbientApp/AmbientApp" > /tmp/ambientapp.log 2>&1 &
     sleep 1
 
@@ -270,7 +273,7 @@ run_apps() {
     echo "Starting RemoteSpeakerApp..."
     VSOMEIP_APPLICATION_NAME=RemoteSpeakerApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/RemoteSpeakerApp/config/vsomeip_speaker.json" \
-    COMMONAPI_CONFIG="$COMMONAPI_CFG" \
+    COMMONAPI_CONFIG="$SCRIPT_DIR/RemoteSpeakerApp/config/commonapi_speaker.ini" \
     "$BUILD_DIR/RemoteSpeakerApp/RemoteSpeakerApp" > /tmp/speakerapp.log 2>&1 &
 
     echo ""
