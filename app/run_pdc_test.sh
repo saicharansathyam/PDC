@@ -158,6 +158,7 @@ run_apps() {
     pkill -f MediaApp           2>/dev/null || true
     pkill -f AmbientApp         2>/dev/null || true
     rm -f /tmp/vsomeip.lck 2>/dev/null || true
+    rm -f /tmp/vsomeip-0   2>/dev/null || true
     sleep 1
 
     # ── VehicleControlMock ────────────────────────────────────────────────────
