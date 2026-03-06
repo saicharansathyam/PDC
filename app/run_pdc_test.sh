@@ -32,16 +32,6 @@ build_apps() {
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
 
-    # Build VehicleControlMock
-    echo "Building VehicleControlMock..."
-    echo "────────────────────────────────────────────────────────────────────────────────"
-    mkdir -p VehicleControlMock
-    cd VehicleControlMock
-    cmake "$SCRIPT_DIR/VehicleControlMock" \
-        -DCOMMONAPI_GEN_DIR="$COMMONAPI_GEN_DIR"
-    make -j$(nproc)
-    cd ..
-
     # Build GearApp
     echo ""
     echo "Building GearApp..."
@@ -143,13 +133,11 @@ run_apps() {
     fi
 
     # Per-app CommonAPI configs — each specifies binding=someip for VehicleControl
-    VCMOCK_CAPI="$SCRIPT_DIR/VehicleControlMock/config/commonapi_mock.ini"
     PDC_CAPI="$SCRIPT_DIR/PDCApp/config/commonapi_pdc.ini"
     ECU2_CAPI="$SCRIPT_DIR/GearApp/config/commonapi_ecu2.ini"
     XDG_RT="/run/user/$(id -u)"
 
     # Kill stale processes and lock files
-    pkill -f VehicleControlMock 2>/dev/null || true
     pkill -f HU_MainApp         2>/dev/null || true
     pkill -f GearApp            2>/dev/null || true
     pkill -f PDCApp             2>/dev/null || true
@@ -160,14 +148,6 @@ run_apps() {
     rm -f /tmp/vsomeip.lck 2>/dev/null || true
     rm -f /tmp/vsomeip-0   2>/dev/null || true
     sleep 1
-
-    # ── VehicleControlMock ────────────────────────────────────────────────────
-    echo "Starting VehicleControlMock..."
-    VSOMEIP_APPLICATION_NAME=VehicleControlMock \
-    VSOMEIP_CONFIGURATION="$SCRIPT_DIR/VehicleControlMock/config/vsomeip_mock.json" \
-    COMMONAPI_CONFIG="$VCMOCK_CAPI" \
-    "$BUILD_DIR/VehicleControlMock/VehicleControlMock" > /tmp/vcmock.log 2>&1 &
-    sleep 2
 
     # ── HU_MainApp Compositor ─────────────────────────────────────────────────
     # Detect display backend: prefer Wayland if wayland-0 socket exists, else X11
@@ -216,7 +196,7 @@ run_apps() {
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
     COMMONAPI_CONFIG="$ECU2_CAPI" \
     "$BUILD_DIR/GearApp/GearApp" > /tmp/gearapp.log 2>&1 &
-    sleep 1
+    sleep 2  # GearApp is the vsomeip routing manager — wait for its socket
 
     # ── PDCApp ────────────────────────────────────────────────────────────────
     # QT_QUICK_BACKEND=software: avoids NVIDIA EGL nested Wayland surface errors
@@ -290,7 +270,7 @@ run_apps() {
     echo "  4. Click 'P', 'N', or 'D' to hide PDCApp overlay"
     echo ""
     echo "To stop all processes:"
-    echo "  pkill -f VehicleControlMock; pkill -f HU_MainApp; pkill -f GearApp; pkill -f PDCApp"
+    echo "  pkill -f HU_MainApp; pkill -f GearApp; pkill -f PDCApp"
     echo "  pkill -f RemoteSpeakerApp; pkill -f HomeScreenApp; pkill -f MediaApp; pkill -f AmbientApp"
     echo ""
 }

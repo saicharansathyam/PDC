@@ -13,6 +13,7 @@
             "id": "0x0100"
         }
     ],
+    "routing": "GearApp",
     "service-discovery": {
         "enable": "true",
         "multicast": "224.244.224.245",

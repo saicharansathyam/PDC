@@ -27,13 +27,21 @@ bool GstVideoReceiver::initialize(int port)
 {
     m_port = port;
 
-    // Use software decoder to avoid NVIDIA GPU resource lock conflict with
-    // the HU_MainApp compositor (nvv4l2decoder blocks in gst_parse_launch when
-    // the NVIDIA driver lock is held by another EGL context).
-    // TODO: re-enable nvv4l2decoder once standalone camera pipeline is tested.
-    QString decoder = "avdec_h264";
-    QString converter = "videoconvert";
-    qDebug() << "[GstVideoReceiver] Using software decoder (avdec_h264)";
+    // Runtime NVIDIA decoder detection: use nvv4l2decoder on Jetson if available,
+    // fall back to avdec_h264 (software) on desktop.
+    QString decoder;
+    QString converter;
+    GstElementFactory *nvFactory = gst_element_factory_find("nvv4l2decoder");
+    if (nvFactory) {
+        decoder = "nvv4l2decoder";
+        converter = "nvvidconv";
+        gst_object_unref(nvFactory);
+        qDebug() << "[GstVideoReceiver] Using NVIDIA hardware decoder (nvv4l2decoder)";
+    } else {
+        decoder = "avdec_h264";
+        converter = "videoconvert";
+        qDebug() << "[GstVideoReceiver] Using software decoder (avdec_h264)";
+    }
 
     // Build receive pipeline
     // UDP source -> RTP depay -> H264 parse -> decode -> convert -> appsink

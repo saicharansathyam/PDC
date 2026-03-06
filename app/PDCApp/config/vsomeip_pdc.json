@@ -16,6 +16,7 @@
             "id": "0x0300"
         }
     ],
+    "routing": "GearApp",
     "clients": [
         {
             "service": "0x1234",
