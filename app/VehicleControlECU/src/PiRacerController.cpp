@@ -22,44 +22,37 @@ PiRacerController::~PiRacerController()
 
 bool PiRacerController::initialize()
 {
+    // Initialize I2C hardware (steering/throttle/battery) — non-fatal if pigpio unavailable
     try {
-        // Initialize steering controller (0x40)
         m_steeringController = std::make_unique<PCA9685>(1, 0x40);
         m_steeringController->setPWMFreq(PWM_FREQ_50HZ);
-        
-        // Initialize throttle controller (0x60)
         m_throttleController = std::make_unique<PCA9685>(1, 0x60);
         m_throttleController->setPWMFreq(PWM_FREQ_50HZ);
-        
-        // Initialize battery monitor
         m_batteryMonitor = std::make_unique<BatteryMonitor>();
         m_batteryMonitor->initialize();
-        
-        // Initialize CAN interface
-        m_canInterface = std::make_unique<CANInterface>();
-        if (m_canInterface->initialize("can0")) {
-            qDebug() << "✅ CAN interface initialized";
-            connect(m_canInterface.get(), &CANInterface::speedDataReceived,
-                    this, &PiRacerController::onSpeedDataReceived);
-            connect(m_canInterface.get(), &CANInterface::distanceDataReceived,
-                    this, &PiRacerController::onDistanceDataReceived);
-        } else {
-            qWarning() << "⚠️  CAN interface failed - speed/distance will be unavailable";
-        }
-        
-        qDebug() << "✅ PiRacerController initialized";
-        qDebug() << "   - Steering Controller: 0x40";
-        qDebug() << "   - Throttle Controller: 0x60";
-        qDebug() << "   - Battery Monitor: INA219";
-        qDebug() << "   - CAN Interface: can0 (1000kbps)";
-        
+        qDebug() << "✅ PiRacer I2C hardware initialized (steering/throttle/battery)";
         warmUp();
-        return true;
-        
     } catch (const std::exception& e) {
-        qCritical() << "❌ Failed to initialize PiRacerController:" << e.what();
-        return false;
+        qWarning() << "⚠️  PiRacer I2C hardware unavailable:" << e.what();
+        qWarning() << "   Motor/servo control disabled - CAN distance data still active";
+        m_steeringController.reset();
+        m_throttleController.reset();
+        m_batteryMonitor.reset();
     }
+
+    // Initialize CAN interface separately — always attempted regardless of I2C result
+    m_canInterface = std::make_unique<CANInterface>();
+    if (m_canInterface->initialize("can0")) {
+        qDebug() << "✅ CAN interface initialized (ultrasonic distance active)";
+        connect(m_canInterface.get(), &CANInterface::speedDataReceived,
+                this, &PiRacerController::onSpeedDataReceived);
+        connect(m_canInterface.get(), &CANInterface::distanceDataReceived,
+                this, &PiRacerController::onDistanceDataReceived);
+    } else {
+        qWarning() << "⚠️  CAN interface failed - speed/distance will be unavailable";
+    }
+
+    return true;
 }
 
 void PiRacerController::setGearPosition(const QString& gear)

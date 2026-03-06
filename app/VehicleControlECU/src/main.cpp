@@ -25,24 +25,21 @@ int main(int argc, char *argv[])
     // ═══════════════════════════════════════════════════════
     qDebug() << "";
     qDebug() << "🔧 Initializing GPIO library...";
-    if (gpioInitialise() < 0) {
-        qCritical() << "❌ Failed to initialize pigpio!";
-        qCritical() << "   Make sure to run with sudo: sudo ./VehicleControlECU";
-        return -1;
+    bool gpioOk = (gpioInitialise() >= 0);
+    if (!gpioOk) {
+        qWarning() << "⚠️  pigpio init failed - motor/servo control unavailable";
+        qWarning() << "   CAN bus (ultrasonic distance) and vsomeip service will still run";
+    } else {
+        qDebug() << "✅ GPIO library initialized";
     }
-    qDebug() << "✅ GPIO library initialized";
-    
+
     // ═══════════════════════════════════════════════════════
     // 2. Initialize PiRacer Hardware Controller
     // ═══════════════════════════════════════════════════════
     qDebug() << "";
     qDebug() << "🚗 Initializing PiRacer hardware...";
     PiRacerController piracerController;
-    if (!piracerController.initialize()) {
-        qCritical() << "❌ Failed to initialize PiRacer hardware!";
-        gpioTerminate();
-        return -1;
-    }
+    piracerController.initialize();  // Non-fatal: CAN still works if I2C fails
     
     // ═══════════════════════════════════════════════════════
     // 3. Initialize Gamepad Handler

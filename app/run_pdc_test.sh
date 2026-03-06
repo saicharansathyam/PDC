@@ -190,7 +190,6 @@ run_apps() {
     QT_QPA_PLATFORM=wayland \
     WAYLAND_DISPLAY=wayland-1 \
     QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
-    QT_QUICK_BACKEND=software \
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=GearApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
@@ -204,7 +203,6 @@ run_apps() {
     QT_QPA_PLATFORM=wayland \
     WAYLAND_DISPLAY=wayland-1 \
     QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
-    QT_QUICK_BACKEND=software \
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=PDCApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/PDCApp/config/vsomeip_pdc.json" \
@@ -217,7 +215,6 @@ run_apps() {
     QT_QPA_PLATFORM=wayland \
     WAYLAND_DISPLAY=wayland-1 \
     QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
-    QT_QUICK_BACKEND=software \
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=HomeScreenApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
@@ -230,7 +227,6 @@ run_apps() {
     QT_QPA_PLATFORM=wayland \
     WAYLAND_DISPLAY=wayland-1 \
     QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
-    QT_QUICK_BACKEND=software \
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=MediaApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
@@ -243,7 +239,6 @@ run_apps() {
     QT_QPA_PLATFORM=wayland \
     WAYLAND_DISPLAY=wayland-1 \
     QT_WAYLAND_DISABLE_WINDOWDECORATION=1 \
-    QT_QUICK_BACKEND=software \
     XDG_RUNTIME_DIR="$XDG_RT" \
     VSOMEIP_APPLICATION_NAME=AmbientApp \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \

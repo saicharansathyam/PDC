@@ -34,7 +34,8 @@ bool GstVideoReceiver::initialize(int port)
     GstElementFactory *nvFactory = gst_element_factory_find("nvv4l2decoder");
     if (nvFactory) {
         decoder = "nvv4l2decoder";
-        converter = "nvvidconv";
+        // nvvidconv outputs NV12/RGBA but not BGRA — add videoconvert for final format conversion
+        converter = "nvvidconv ! videoconvert";
         gst_object_unref(nvFactory);
         qDebug() << "[GstVideoReceiver] Using NVIDIA hardware decoder (nvv4l2decoder)";
     } else {
