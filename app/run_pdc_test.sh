@@ -137,6 +137,9 @@ run_apps() {
     ECU2_CAPI="$SCRIPT_DIR/GearApp/config/commonapi_ecu2.ini"
     XDG_RT="/run/user/$(id -u)"
 
+    # Ensure multicast route exists for vsomeip SD
+    sudo ip route add 224.0.0.0/4 dev enP8p1s0 2>/dev/null || true
+
     # Kill stale processes and lock files
     pkill -f HU_MainApp         2>/dev/null || true
     pkill -f GearApp            2>/dev/null || true
