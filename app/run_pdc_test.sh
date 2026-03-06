@@ -170,16 +170,17 @@ run_apps() {
     sleep 2
 
     # ── HU_MainApp Compositor ─────────────────────────────────────────────────
-    # On aarch64 (Jetson): nested compositor on GNOME Wayland (wayland-0)
-    # On x86_64 (desktop): runs on X11 via xcb
+    # Detect display backend: prefer Wayland if wayland-0 socket exists, else X11
     echo "Starting HU_MainApp Compositor..."
-    if [ "$ARCH" = "aarch64" ]; then
+    if [ -S "$XDG_RT/wayland-0" ]; then
+        echo "  Display: Wayland (wayland-0 found)"
         QT_QPA_PLATFORM=wayland \
         WAYLAND_DISPLAY=wayland-0 \
         QML2_IMPORT_PATH="$QML_IMPORT" \
         XDG_RUNTIME_DIR="$XDG_RT" \
         "$BUILD_DIR/HU_MainApp/HU_MainApp_Compositor" > /tmp/hu_main.log 2>&1 &
     else
+        echo "  Display: X11 (no wayland-0 socket)"
         QT_QPA_PLATFORM=xcb \
         QML2_IMPORT_PATH="$QML_IMPORT" \
         XDG_RUNTIME_DIR="$XDG_RT" \
