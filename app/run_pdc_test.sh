@@ -6,6 +6,9 @@
 
 set -e
 
+# Ensure display is set for both SSH and local terminal sessions
+export DISPLAY="${DISPLAY:-:0}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$BASE_DIR/build_pdc_test"
