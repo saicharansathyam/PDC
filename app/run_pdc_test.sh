@@ -203,7 +203,7 @@ run_apps() {
     QT_QUICK_BACKEND=software \
     QSG_RENDER_LOOP=basic \
     XDG_RUNTIME_DIR="$XDG_RT" \
-    VSOMEIP_APPLICATION_NAME=GearApp \
+    VSOMEIP_APPLICATION_NAME=GearApp_client \
     VSOMEIP_CONFIGURATION="$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json" \
     COMMONAPI_CONFIG="$ECU2_CAPI" \
     "$BUILD_DIR/GearApp/GearApp" > /tmp/gearapp.log 2>&1 &

@@ -96,12 +96,10 @@ void loop() {
 
     canMsg.data[7] = 0x00; // 마지막 바이트 비움
 
-    // 5. CAN 메시지 전송 및 시리얼 출력
-    if (mcp2515.sendMessage(&canMsg) == MCP2515::ERROR_OK) {
-        Serial.print("Speed: "); Serial.print(speed);
-        Serial.print(" cm/s, Distance: "); Serial.print(distanceData.value);
-        Serial.println(" cm [Sent]");
-    } else {
-        Serial.println("CAN Send Error");
-    }
+    // 5. 시리얼 출력 (항상) + CAN 메시지 전송 (가능한 경우)
+    Serial.print("Speed: "); Serial.print(speed);
+    Serial.print(" cm/s, Distance: "); Serial.print(distanceData.value);
+    Serial.println(" cm [Sent]");
+
+    mcp2515.sendMessage(&canMsg);  // Best-effort CAN send (no CAN hat = silently fails)
 }

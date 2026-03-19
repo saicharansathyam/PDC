@@ -35,7 +35,7 @@ void VehicleControlClient::connectToService()
     // Build proxy
     const std::string domain = "local";
     const std::string instance = "vehiclecontrol.VehicleControl";
-    const std::string connection = "GearApp_client";
+    const std::string connection = "GearApp_vc";
     
     m_proxy = m_runtime->buildProxy<VehicleControlProxy>(domain, instance, connection);
     

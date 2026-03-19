@@ -20,7 +20,7 @@ import serial
 import re
 import sys
 
-SERIAL_PORT   = "/dev/ttyACM0"
+SERIAL_PORT   = "/dev/ttyACM1"
 SERIAL_BAUD   = 115200
 CAN_INTERFACE = "can0"
 ARDUINO_ID    = 0x0F6
