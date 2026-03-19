@@ -154,6 +154,8 @@ run_apps() {
     pkill -f AmbientApp         2>/dev/null || true
     rm -f /tmp/vsomeip.lck 2>/dev/null || true
     rm -f /tmp/vsomeip-0   2>/dev/null || true
+    # Clean up stale wayland sockets from previous runs
+    rm -f "$XDG_RT/wayland-1" 2>/dev/null || true
     sleep 1
 
     # ── HU_MainApp Compositor ─────────────────────────────────────────────────
@@ -168,6 +170,7 @@ run_apps() {
         "$BUILD_DIR/HU_MainApp/HU_MainApp_Compositor" > /tmp/hu_main.log 2>&1 &
     else
         echo "  Display: X11 (no wayland-0 socket)"
+        DISPLAY="$DISPLAY" \
         QT_QPA_PLATFORM=xcb \
         QML2_IMPORT_PATH="$QML_IMPORT" \
         XDG_RUNTIME_DIR="$XDG_RT" \
