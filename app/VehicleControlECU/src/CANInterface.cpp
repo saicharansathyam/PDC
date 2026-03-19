@@ -31,17 +31,14 @@ bool CANInterface::setupCANInterface(const QString &interface)
     process.start("ip", QStringList() << "link" << "set" << interface << "down");
     process.waitForFinished();
 
-    // Set bitrate to 1000kbps (same as Arduino)
+    // Set bitrate to 1000kbps (same as Arduino) — non-fatal for virtual interfaces (vcan)
     process.start("ip", QStringList() << "link" << "set" << interface
                                       << "type" << "can" << "bitrate" << "1000000");
     process.waitForFinished();
 
     if (process.exitCode() != 0) {
-        QString error = QString("Failed to set CAN bitrate: %1")
-                       .arg(QString(process.readAllStandardError()));
-        qCritical() << error;
-        emit canError(error);
-        return false;
+        qWarning() << "⚠️  Could not set CAN bitrate (OK for virtual interfaces):"
+                   << QString(process.readAllStandardError()).trimmed();
     }
 
     // Set CAN interface up
