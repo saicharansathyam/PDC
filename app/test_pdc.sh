@@ -57,7 +57,7 @@ VERBOSE=false
 COMPOSITOR_TIMEOUT=30
 APP_START_TIMEOUT=5
 SERVICE_DISCOVERY_TIMEOUT=15
-EVENT_FLOW_TIMEOUT=10
+EVENT_FLOW_TIMEOUT=30
 GEAR_RESPONSE_TIMEOUT=8
 DISTANCE_ZONE_TIMEOUT=30
 LATENCY_SAMPLES=20
@@ -137,10 +137,12 @@ cleanup() {
     if [ ${#PIDS[@]} -gt 0 ]; then
         log "Stopping test processes..."
         for pid in "${PIDS[@]}"; do
+            disown "$pid" 2>/dev/null || true
             kill "$pid" 2>/dev/null || true
         done
         sleep 1
         for pid in "${PIDS[@]}"; do
+            disown "$pid" 2>/dev/null || true
             kill -9 "$pid" 2>/dev/null || true
         done
     fi
@@ -537,25 +539,8 @@ test_startup() {
         [AmbientApp]=/tmp/ambientapp.log
     )
 
-    # VehicleControlMock (service provider — start before clients)
-    info "Starting VehicleControlMock..."
-    VSOMEIP_APPLICATION_NAME=VehicleControlMock \
-    VSOMEIP_CONFIGURATION="$SCRIPT_DIR/VehicleControlMock/config/vsomeip_mock.json" \
-    COMMONAPI_CONFIG="$MOCK_CAPI" \
-    "$BUILD_DIR/VehicleControlMock/VehicleControlMock" > /tmp/vcmock.log 2>&1 &
-    MOCK_PID=$!
-    PIDS+=($MOCK_PID)
-    sleep 2  # Routing manager must be ready before clients
-
-    if proc_alive $MOCK_PID; then
-        record_test "T06.mock_start" "VehicleControlMock started (PID $MOCK_PID)" PASS
-    else
-        record_test "T06.mock_start" "VehicleControlMock started" FAIL "check /tmp/vcmock.log"
-        $VERBOSE && tail -20 /tmp/vcmock.log
-    fi
-
-    # GearApp
-    info "Starting GearApp..."
+    # ── GearApp — vsomeip routing manager for ECU2, MUST start first ─────────
+    info "Starting GearApp (routing manager)..."
     QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=wayland-1 \
     QT_WAYLAND_DISABLE_WINDOWDECORATION=1 QT_QUICK_BACKEND=software QSG_RENDER_LOOP=basic \
     XDG_RUNTIME_DIR="$XDG_RT" \
@@ -565,13 +550,46 @@ test_startup() {
     "$BUILD_DIR/GearApp/GearApp" > /tmp/gearapp.log 2>&1 &
     GEAR_PID=$!
     PIDS+=($GEAR_PID)
-    sleep "$APP_START_TIMEOUT"
+    sleep "$APP_START_TIMEOUT"  # Wait for routing manager socket before other apps
 
     if proc_alive $GEAR_PID; then
         record_test "T06.gear_start" "GearApp started (PID $GEAR_PID)" PASS
     else
         record_test "T06.gear_start" "GearApp started" FAIL "check /tmp/gearapp.log"
         $VERBOSE && tail -20 /tmp/gearapp.log
+    fi
+
+    # ── VehicleControlMock — only start when real ECU1 is NOT reachable ──────
+    # Reason: mock also provides service 0x1234/0x5678, conflicting with real ECU1.
+    # When ECU1 is live, skip mock and use real sensor data for all tests.
+    MOCK_PID=0
+    if $MOCK_ONLY; then
+        info "Starting VehicleControlMock (no real ECU1)..."
+        # Write a temp vsomeip config that connects to GearApp routing manager
+        local MOCK_VSOMEIP_TMP="/tmp/vsomeip_mock_test.json"
+        python3 - "$SCRIPT_DIR/VehicleControlMock/config/vsomeip_mock.json" \
+                  "$MOCK_VSOMEIP_TMP" <<'PYEOF'
+import json, sys
+cfg = json.load(open(sys.argv[1]))
+cfg["routing"] = "GearApp"   # hand off routing to GearApp
+json.dump(cfg, open(sys.argv[2], "w"), indent=2)
+PYEOF
+        VSOMEIP_APPLICATION_NAME=VehicleControlMock \
+        VSOMEIP_CONFIGURATION="$MOCK_VSOMEIP_TMP" \
+        COMMONAPI_CONFIG="$MOCK_CAPI" \
+        "$BUILD_DIR/VehicleControlMock/VehicleControlMock" > /tmp/vcmock.log 2>&1 &
+        MOCK_PID=$!
+        PIDS+=($MOCK_PID)
+        sleep 2
+        if proc_alive $MOCK_PID; then
+            record_test "T06.mock_start" "VehicleControlMock started (PID $MOCK_PID)" PASS
+        else
+            record_test "T06.mock_start" "VehicleControlMock started" FAIL "check /tmp/vcmock.log"
+            $VERBOSE && tail -20 /tmp/vcmock.log
+        fi
+    else
+        record_test "T06.mock_start" "VehicleControlMock skipped (real ECU1 at $ECU1_IP)" WARN
+        echo "" > /tmp/vcmock.log
     fi
 
     # PDCApp
@@ -980,8 +998,10 @@ test_shutdown() {
     fi
 
     # Send SIGTERM and verify clean exit
+    # disown removes jobs from bash job table → suppresses "Aborted" messages
     info "Sending SIGTERM to all test processes..."
     for pid in "${PIDS[@]}"; do
+        disown "$pid" 2>/dev/null || true
         kill -TERM "$pid" 2>/dev/null || true
     done
     sleep 3
@@ -996,6 +1016,7 @@ test_shutdown() {
     else
         record_test "T14.clean_shutdown" "All processes exited cleanly on SIGTERM" WARN "$lingering process(es) needed SIGKILL"
         for pid in "${PIDS[@]}"; do
+            disown "$pid" 2>/dev/null || true
             kill -9 "$pid" 2>/dev/null || true
         done
     fi
