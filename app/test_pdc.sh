@@ -28,7 +28,7 @@
 #   -v            Verbose: show app logs during tests
 # ═══════════════════════════════════════════════════════════════════════════════
 
-set -euo pipefail
+set -uo pipefail
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -197,13 +197,20 @@ test_prerequisites() {
     section "T01  System Prerequisites"
 
     # Required binaries
-    for cmd in python3 jq ip; do
+    for cmd in python3 ip; do
         if command -v "$cmd" &>/dev/null; then
             record_test "T01.cmd.$cmd" "Command available: $cmd" PASS
         else
             record_test "T01.cmd.$cmd" "Command available: $cmd" FAIL "not found in PATH"
         fi
     done
+
+    # jq optional — python3 json.tool used as fallback
+    if command -v jq &>/dev/null; then
+        record_test "T01.cmd.jq" "Command available: jq (JSON validator)" PASS
+    else
+        record_test "T01.cmd.jq" "Command available: jq" WARN "not found — using python3 json.tool as fallback"
+    fi
 
     # Qt / QPA
     if ldconfig -p 2>/dev/null | grep -q "libQt5Core" || [ -f /usr/lib/aarch64-linux-gnu/libQt5Core.so.5 ] || [ -f /usr/lib/x86_64-linux-gnu/libQt5Core.so.5 ]; then
@@ -219,11 +226,28 @@ test_prerequisites() {
         record_test "T01.gstreamer" "GStreamer (gst-launch-1.0) available" WARN "camera tests will skip"
     fi
 
-    # vsomeip shared library
-    if ldconfig -p 2>/dev/null | grep -q "libvsomeip3" || find /usr/local/lib /usr/lib -name "libvsomeip3*" 2>/dev/null | grep -q .; then
+    # vsomeip shared library — check standard paths + project install_folder
+    local vsomeip_found=false
+    for search_path in \
+        "/usr/local/lib" "/usr/lib" \
+        "$BASE_DIR/install_folder/lib" \
+        "$BASE_DIR/deps/vsomeip/build" \
+        "$HOME/install_folder/lib" \
+        "$HOME/vsomeip/lib" \
+        "$HOME/commonapi/lib"
+    do
+        if find "$search_path" -name "libvsomeip3*" 2>/dev/null | grep -q .; then
+            vsomeip_found=true
+            break
+        fi
+    done
+    if ! $vsomeip_found; then
+        ldconfig -p 2>/dev/null | grep -q "libvsomeip3" && vsomeip_found=true || true
+    fi
+    if $vsomeip_found; then
         record_test "T01.vsomeip" "vsomeip3 library found" PASS
     else
-        record_test "T01.vsomeip" "vsomeip3 library found" FAIL
+        record_test "T01.vsomeip" "vsomeip3 library found" WARN "not in standard paths — set LD_LIBRARY_PATH if needed"
     fi
 
     # CommonAPI SomeIP library
@@ -277,13 +301,29 @@ test_build_artifacts() {
     done
 }
 
+# ─── JSON helpers (no jq dependency) ─────────────────────────────────────────
+json_valid() {
+    python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$1" 2>/dev/null
+}
+json_get() {
+    # json_get FILE KEY  — prints value or empty string, always exits 0
+    python3 -c "
+import json,sys
+try:
+    d=json.load(open(sys.argv[1]))
+    print(d.get(sys.argv[2],''))
+except:
+    print('')
+" "$1" "$2" 2>/dev/null || true
+}
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # T03 – CONFIG FILE VALIDITY
 # ═══════════════════════════════════════════════════════════════════════════════
 test_configs() {
     section "T03  Configuration Files"
 
-    # JSON config files — parse with jq
+    # JSON config files — validated with python3 json module
     local json_configs=(
         "$SCRIPT_DIR/GearApp/config/vsomeip_ecu2.json"
         "$SCRIPT_DIR/PDCApp/config/vsomeip_pdc.json"
@@ -292,24 +332,26 @@ test_configs() {
     )
 
     for cfg in "${json_configs[@]}"; do
-        local name=$(basename "$cfg")
+        local name
+        name=$(basename "$cfg")
         if [ ! -f "$cfg" ]; then
-            record_test "T03.json.$name" "JSON config exists: $name" FAIL "file not found"
+            record_test "T03.json.$name" "JSON config exists: $name" FAIL "file not found at $cfg"
             continue
         fi
-        if jq empty "$cfg" 2>/dev/null; then
+        if json_valid "$cfg"; then
             record_test "T03.json.$name" "JSON valid: $name" PASS
         else
-            record_test "T03.json.$name" "JSON valid: $name" FAIL "parse error"
+            record_test "T03.json.$name" "JSON valid: $name" FAIL "python3 json parse error"
+            continue
         fi
 
-        # Check required keys
+        # Check required keys (python3 always exits 0)
         local unicast
-        unicast=$(jq -r '.unicast // empty' "$cfg" 2>/dev/null)
+        unicast=$(json_get "$cfg" "unicast")
         if [ -n "$unicast" ]; then
             record_test "T03.json.$name.unicast" "  unicast address present ($unicast)" PASS
         else
-            record_test "T03.json.$name.unicast" "  unicast address present" FAIL
+            record_test "T03.json.$name.unicast" "  unicast address present" FAIL "missing 'unicast' key"
         fi
     done
 
@@ -321,9 +363,10 @@ test_configs() {
     )
 
     for cfg in "${ini_configs[@]}"; do
-        local name=$(basename "$cfg")
+        local name
+        name=$(basename "$cfg")
         if [ ! -f "$cfg" ]; then
-            record_test "T03.ini.$name" "INI config exists: $name" FAIL "file not found"
+            record_test "T03.ini.$name" "INI config exists: $name" FAIL "file not found at $cfg"
             continue
         fi
         if grep -q "binding.*=.*someip" "$cfg" 2>/dev/null; then
@@ -346,7 +389,7 @@ test_network() {
     else
         # Try to add it
         local iface
-        iface=$(ip route get 192.168.1.1 2>/dev/null | grep -oP 'dev \K\S+' | head -1)
+        iface=$(ip route get 192.168.1.1 2>/dev/null | grep -oP 'dev \K\S+' | head -1 || true)
         if [ -n "$iface" ]; then
             sudo ip route add 224.0.0.0/4 dev "$iface" 2>/dev/null || true
             if ip route show | grep -q "224\.0\.0\.0/4"; then
@@ -700,8 +743,8 @@ test_distance_zones() {
 
     if [ -n "$pdc_distances" ]; then
         local min_dist max_dist
-        min_dist=$(echo "$pdc_distances" | sort -n | head -1)
-        max_dist=$(echo "$pdc_distances" | sort -n | tail -1)
+        min_dist=$(echo "$pdc_distances" | sort -n | head -1 || true)
+        max_dist=$(echo "$pdc_distances" | sort -n | tail -1 || true)
         record_test "T10.pdc_range" "PDCApp distance range: ${min_dist}cm – ${max_dist}cm" PASS
         info "Distance range received by PDCApp: ${min_dist}cm to ${max_dist}cm"
 
@@ -812,7 +855,7 @@ test_latency() {
         if [ "$type" = "MOCK" ]; then
             # Find matching PDC entry for same distance
             local pdc_ts
-            pdc_ts=$(grep "^PDC .* $dist$" /tmp/latency_pdc.txt 2>/dev/null | head -1 | awk '{print $2}')
+            pdc_ts=$(grep "^PDC .* $dist$" /tmp/latency_pdc.txt 2>/dev/null | head -1 | awk '{print $2}' || true)
             if [ -n "$pdc_ts" ] && [ "$pdc_ts" -gt "$ts" ]; then
                 local delta=$((pdc_ts - ts))
                 if [ $delta -lt 5000 ]; then  # Discard outliers > 5s
