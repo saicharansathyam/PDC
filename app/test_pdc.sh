@@ -261,7 +261,7 @@ test_prerequisites() {
     fi
 
     # DISPLAY for compositor
-    export DISPLAY="${DISPLAY:-:0}"
+    export DISPLAY="${DISPLAY:-:1}"
     if [ -n "${DISPLAY:-}" ]; then
         record_test "T01.display" "DISPLAY variable set ($DISPLAY)" PASS
     else
@@ -469,7 +469,7 @@ run_build() {
 test_startup() {
     section "T06  Process Startup"
 
-    export DISPLAY="${DISPLAY:-:0}"
+    export DISPLAY="${DISPLAY:-:1}"
 
     # Kill ALL stale PDC processes — critical to avoid routing manager conflicts
     # (run_pdc_test.sh may have left GearApp running as routing manager)
