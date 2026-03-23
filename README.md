@@ -485,20 +485,6 @@ PDC/
 └── install_folder/             # Compiled shared libraries and headers
 ```
 
----
-
-## Service Interfaces (FIDL)
-
-### VehicleControl — *ECU1 provides, all ECU2 apps consume*
-
-| Type | Name | Parameters |
-|---|---|---|
-| Method | `setGearPosition` | `in: gear (String)` → `out: success (Boolean)` |
-| Broadcast | `gearDistanceChanged` | `newGear, oldGear: String`, `distance: UInt16` (cm), `timestamp: UInt64` |
-| Broadcast | `vehicleStateChanged` | `gear: String`, `speed: UInt16`, `batteryLevel: UInt8`, `timestamp: UInt64` |
-
-### AmbientControl — *AmbientApp provides → HomeScreenApp, MediaApp*
-### MediaControl — *MediaApp provides → HomeScreenApp, AmbientApp*
 
 ---
 
@@ -577,35 +563,6 @@ cd ~/PDC/app && ./run_pdc_test.sh run
 ```
 
 **Usage:** Click **R** in GearApp → PDCApp overlay appears with live camera and distance arcs. Move object in front of sensor to see zone changes. Click **P / N / D** → overlay hides.
-
----
-
-## Automated Tests
-
-```bash
-./test_pdc.sh                                        # Full test (build + run)
-./test_pdc.sh --no-build                             # Skip build
-./test_pdc.sh --mode preflight                       # Config/network checks only
-./test_pdc.sh --no-build --latency                   # Include latency measurement
-./test_pdc.sh --no-build --report /tmp/report.json   # JSON report
-```
-
-| Test | Description |
-|---|---|
-| T01 | System prerequisites |
-| T02 | Build artifacts exist |
-| T03 | Config file validity (JSON + INI) |
-| T04 | Network — multicast route, ECU1 ping, port 5000 |
-| T05 | Build all apps |
-| T06 | Process startup + wayland-1 compositor socket |
-| T07 | vsomeip service discovery |
-| T08 | Event flow: VehicleControl → PDCApp |
-| T09 | Gear change → PDCApp overlay visibility |
-| T10 | Distance zone transitions (safe/green/yellow/red) |
-| T11 | Camera RTP stream reception |
-| T12 | End-to-end pipeline latency |
-| T13 | RemoteSpeakerApp beep trigger |
-| T14 | Process health + clean shutdown |
 
 ---
 
