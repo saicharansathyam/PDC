@@ -658,4 +658,4 @@ pkill -f GearApp && sleep 2
 
 ## License
 
-Developed as part of the **SEAME (Southeast Asia Mobility Engineering)** automotive embedded systems program.
+Developed as part of the **SEAME ** automotive embedded systems program.
